@@ -15,13 +15,7 @@
 package sources
 
 import (
-	"flag"
 	cadvisor "github.com/google/cadvisor/info"
-)
-
-var (
-	argMaster      = flag.String("kubernetes_master", "", "Kubernetes master IP")
-	argKubeletPort = flag.String("kubelet_port", "10250", "Kubelet port")
 )
 
 type Container struct {

@@ -19,12 +19,14 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/GoogleCloudPlatform/heapster/sources/nodes"
 	"github.com/golang/glog"
 	cadvisorClient "github.com/google/cadvisor/client"
 	cadvisor "github.com/google/cadvisor/info"
 )
 
 type cadvisorSource struct {
+	port      string
 	lastQuery time.Time
 }
 
@@ -65,11 +67,11 @@ func (self *cadvisorSource) getAllCadvisorData(hostname, ip, port, container str
 	return
 }
 
-func (self *cadvisorSource) fetchData(cadvisorHosts *CadvisorHosts) (rawContainers []RawContainer, nodesInfo []RawContainer, err error) {
-	for hostname, ip := range cadvisorHosts.Hosts {
-		containers, nodeInfo, err := self.getAllCadvisorData(hostname, ip, strconv.Itoa(cadvisorHosts.Port), "/")
+func (self *cadvisorSource) fetchData(nodes []nodes.Node) (rawContainers []RawContainer, nodesInfo []RawContainer, err error) {
+	for _, node := range nodes {
+		containers, nodeInfo, err := self.getAllCadvisorData(node.Name, node.IP, self.port, "/")
 		if err != nil {
-			return nil, nil, fmt.Errorf("Failed to get cAdvisor data from host %q: %v", hostname, err)
+			return nil, nil, fmt.Errorf("Failed to get cAdvisor data from host %q: %v", node.Name, err)
 		}
 		rawContainers = append(rawContainers, containers...)
 		nodesInfo = append(nodesInfo, nodeInfo)
@@ -78,8 +80,12 @@ func (self *cadvisorSource) fetchData(cadvisorHosts *CadvisorHosts) (rawContaine
 	return
 }
 
-func newCadvisorSource() *cadvisorSource {
-	return &cadvisorSource{
-		lastQuery: time.Now(),
+func newCadvisorSource(port int) (*cadvisorSource, error) {
+	if port <= 0 {
+		return nil, fmt.Errorf("cadvisor port invalid - %d", port)
 	}
+	return &cadvisorSource{
+		port:      strconv.Itoa(port),
+		lastQuery: time.Now(),
+	}, nil
 }
