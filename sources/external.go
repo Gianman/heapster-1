@@ -35,7 +35,7 @@ func (self *externalSource) GetInfo() (ContainerData, error) {
 		return ContainerData{}, err
 	}
 
-	containers, nodes, err := self.cadvisor.fetchData(nodeList.Items)
+	containers, nodes, err := self.cadvisor.fetchData(nodeList)
 	if err != nil {
 		glog.Error(err)
 		return ContainerData{}, nil
@@ -62,7 +62,7 @@ func newExternalSource() (Source, error) {
 	}, nil
 }
 
-func (self *externalSource) GetConfig() string {
+func (self *externalSource) DebugInfo() string {
 	desc := "Source type: External\n"
 	// TODO(rjnagal): Cache config?
 	nodeList, err := self.nodesApi.List()
