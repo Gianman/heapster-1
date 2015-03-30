@@ -16,19 +16,23 @@ package api
 
 import cadvisor "github.com/google/cadvisor/info"
 
-// PodState is the state of a pod, used as either input (desired state) or output (current state)
-type Pod struct {
+type PodMetadata struct {
 	Name      string `json:"name,omitempty"`
 	Namespace string `json:"namespace,omitempty"`
 	// TODO(vishh): Rename to UID.
 	ID             string            `json:"id,omitempty"`
 	Hostname       string            `json:"hostname,omitempty"`
-	Containers     []Container       `json:"containers"`
 	Status         string            `json:"status,omitempty"`
 	PodIP          string            `json:"pod_ip,omitempty"`
 	Labels         map[string]string `json:"labels,omitempty"`
 	HostPublicIP   string            `json:"host_public_ip,omitempty"`
 	HostInternalIP string            `json:"host_internal_ip,omitempty"`
+}
+
+// PodState is the state of a pod, used as either input (desired state) or output (current state)
+type Pod struct {
+	PodMetadata `json:",inline"`
+	Containers     []Container       `json:"containers"`
 }
 
 type AggregateData struct {

@@ -167,3 +167,31 @@ type Decoder interface {
 	// TODO: Process events.
 	// TODO: Process config data.
 }
+
+type ObjectType int
+
+const (
+	ObjectPod = iota
+	ObjectService
+	ObjectRC
+)
+// ObjectID uniquely identifies an in-memory object.
+type ObjectID struct {
+	UID string
+	Type ObjectType
+}
+
+
+
+MemoryStore.Pods().Spec().Store(UID, Pod)
+.StoreStatus(UID, PodStatus)
+.StoreStats(UID, PodStats)
+MemoryStore.Nodes().StoreSpec(UID, timestamp, Node)
+.StoreStatus(UID, NodeStatus)
+.StoreStats(UID, NodeStatus)
+.Service().Spec().Store(UID, timestamp, Service)
+
+
+.Stats().StorePod()
+pod ID : {metadata, statsTimeSeries[timestamp, []container]}
+
