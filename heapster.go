@@ -28,11 +28,10 @@ import (
 	"github.com/GoogleCloudPlatform/heapster/manager"
 	"github.com/GoogleCloudPlatform/heapster/sinks"
 	"github.com/GoogleCloudPlatform/heapster/sources/api"
-	"github.com/GoogleCloudPlatform/heapster/validate"
 	"github.com/GoogleCloudPlatform/heapster/version"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/util"
-	"github.com/emicklei/go-restful"
 	"github.com/golang/glog"
+	"github.com/google/cadvisor/validate"
 )
 
 var (
@@ -83,39 +82,6 @@ func validateFlags() error {
 	return nil
 }
 
-func setupHandlers(sources []api.Source, sink sinks.ExternalSinkManager, m manager.Manager) http.Handler {
-	// Make API handler.
-	wsContainer := restful.NewContainer()
-	a := v1.NewApi(m)
-	a.Register(wsContainer)
-
-	// Validation/Debug handler.
-	handleValidate := func(req *restful.Request, resp *restful.Response) {
-		err := validate.HandleRequest(resp, sources, sink)
-		if err != nil {
-			fmt.Fprintf(resp, "%s", err)
-		}
-	}
-	ws := new(restful.WebService).
-		Path("/validate").
-		Produces("text/plain")
-	ws.Route(ws.GET("").To(handleValidate)).
-		Doc("get validation information")
-	wsContainer.Add(ws)
-
-	// TODO(jnagal): Add a main status page.
-	// Redirect root to /validate
-	redirectHandler := http.RedirectHandler(validate.ValidatePage, http.StatusTemporaryRedirect)
-	handleRoot := func(req *restful.Request, resp *restful.Response) {
-		redirectHandler.ServeHTTP(resp, req.Request)
-	}
-	ws = new(restful.WebService)
-	ws.Route(ws.GET("/").To(handleRoot))
-	wsContainer.Add(ws)
-
-	return wsContainer
-}
-
 func doWork() ([]api.Source, sinks.ExternalSinkManager, manager.Manager, error) {
 	sources, err := newSources()
 	if err != nil {
@@ -152,4 +118,54 @@ func setMaxProcs() {
 	if actualNumProcs != numProcs {
 		glog.Warningf("Specified max procs of %d but using %d", numProcs, actualNumProcs)
 	}
+}
+
+func setupHandlers(sources []api.Source, sink sinks.ExternalSinkManager, m manager.Manager) http.Handler {
+	// Make API handler.
+	wsContainer := restful.NewContainer()
+	a := v1.NewApi(m)
+	a.Register(wsContainer)
+
+	// Validation/Debug handler.
+	handleValidate := func(req *restful.Request, resp *restful.Response) {
+		err := validate.HandleRequest(resp, sources, sink)
+		if err != nil {
+			fmt.Fprintf(resp, "%s", err)
+		}
+	}
+	ws := new(restful.WebService).
+		Path("/validate").
+		Produces("text/plain")
+	ws.Route(ws.GET("").To(handleValidate)).
+		Doc("get validation information")
+	wsContainer.Add(ws)
+
+	// TODO(jnagal): Add a main status page.
+	// Redirect root to /validate
+	redirectHandler := http.RedirectHandler(validate.ValidatePage, http.StatusTemporaryRedirect)
+	handleRoot := func(req *restful.Request, resp *restful.Response) {
+		redirectHandler.ServeHTTP(resp, req.Request)
+	}
+	ws = new(restful.WebService)
+	ws.Route(ws.GET("/").To(handleRoot))
+	wsContainer.Add(ws)
+
+	// Setup pporf handlers.
+	ws = new(restful.WebService).
+		Path("/debug/pprof/")
+	ws.Route(ws.GET("").To(func(req *restful.Request, resp *restful.Response) {
+		pprof.Index(resp, req.Request)
+	})).Doc("list available profiling endpoints")
+	ws.Route(ws.GET("profile").To(func(req *restful.Request, resp *restful.Response) {
+		pprof.Profile(resp, req.Request)
+	})).Doc("pprof-formatted cpu profile")
+	ws.Route(ws.GET("symbol").To(func(req *restful.Request, resp *restful.Response) {
+		pprof.Symbol(resp, req.Request)
+	})).Doc("provides a table mapping program counters to function names, for a given symbol")
+	ws.Route(ws.GET("cmdline").To(func(req *restful.Request, resp *restful.Response) {
+		pprof.Cmdline(resp, req.Request)
+	})).Doc("command line of this program.")
+	wsContainer.Add(ws)
+
+	return wsContainer
 }
