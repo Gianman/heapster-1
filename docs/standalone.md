@@ -98,8 +98,8 @@ I0911 13:42:03.657918   21041 heapster.go:58] Heapster version 0.17.0
 I0911 13:42:03.662594   21041 heapster.go:68] Starting heapster on port 8082
 ```
 
-###Test it out
-If you got debug information as before, means that the heapster is working normally.You can test it by requeting its [Reatful api](https://github.com/kubernetes/heapster/blob/master/docs/model.md). You can use some restful tools to test, or just run a `curl` command, 
+### Test it out
+If you got debug information as before, means that the heapster is working normally.You can test it by requeting its [Restful api](https://github.com/kubernetes/heapster/blob/master/docs/model.md). You can use some restful tools to test, or just run a `curl` command, 
 
 ```
 
