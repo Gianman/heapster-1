@@ -11,4 +11,4 @@ if ! git diff --name-only origin/master | grep -c -E "*.go|*.sh|.*yaml|Makefile"
   exit 0
 fi
 
-make test-unit test-integration
+make test-unit -e KUBE_VERSIONS="1.0.6" test-integration
